@@ -43,7 +43,7 @@ class ProductVariables(BaseVariables):
         last_order = self.product.orders[-1]
         return (last_order.expiration_date - datetime.date.today()).days
 
-    @string_rule_variable(cache_result=False)
+    @string_rule_variable()
     def current_month(self):
         return datetime.datetime.now().strftime("%B")
 
@@ -110,16 +110,16 @@ rules = [
 { "conditions": { "all": [
       { "name": "expiration_days",
         "operator": "less_than",
-        "value": "5",
+        "value": 5,
       },
       { "name": "current_inventory",
         "operator": "greater_than",
-        "value": "20",
+        "value": 20,
       },
   ]},
   "actions": [
       { "name": "put_on_sale",
-        "fields": [{"name": "sale_percentage", "value": 0.25}],
+        "params": {"sale_percentage": 0.25},
       },
   ],
 },
@@ -136,16 +136,17 @@ rules = [
           "operator": "equal_to",
           "value": "December",
         },
-        { "name": "goes_well_with",
-          "operator": "shares_at_least_one_element_with",
-          "value": ["eggnog", "sugar cookies"],
+        { "name": "current_inventory",
+          "operator": "less_than",
+          "value": 20,
         }
       ]},
   },
   "actions": [
     { "name": "order_more",
-      "fields":[{"name":"number_to_order", "value": 40}]}
-  ]
+      "params":{"number_to_order": 40},
+    },
+  ],
 }]
 ```
 
@@ -224,9 +225,8 @@ for product in Products.objects.all():
 
 The type represents the type of the value that will be returned for the variable and is necessary since there are different available comparison operators for different types, and the front-end that's generating the rules needs to know which operators are available.
 
-All decorators can optionally take the arguments:
+All decorators can optionally take a label:
 - `label` - A human-readable label to show on the frontend. By default we just split the variable name on underscores and capitalize the words.
-- `cache_result` - Whether to cache the value of the variable for this instance of the variable container object. Defaults to `True` (to avoid re-doing expensive DB queries or computations if you have many rules based on the same variables).
 
 The available types and decorators are:
 
